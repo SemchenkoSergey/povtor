@@ -6,10 +6,10 @@ from resources import Settings
 
 def get_speed(phone_number, cursor):
     command = '''
-    SELECT MIN(dd.max_up_rate), MIN(dd.max_dw_rate)
+    SELECT ROUND(AVG(dd.max_up_rate)), ROUND(AVG(dd.max_dw_rate))
     FROM abon_dsl ad INNER JOIN data_dsl dd
 	ON ad.hostname=dd.hostname AND ad.board=dd.board AND ad.port=dd.port
-    WHERE dd.datetime >= DATE_ADD(CURRENT_DATE(), INTERVAL -1 DAY) AND ad.phone_number = '{}'    
+    WHERE CAST(dd.datetime AS DATE) = DATE_ADD(CURRENT_DATE(), INTERVAL -1 DAY) AND ad.phone_number = '{}'    
     '''.format(phone_number)
     cursor.execute(command)
     result = cursor.fetchall()

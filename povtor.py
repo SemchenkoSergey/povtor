@@ -23,9 +23,9 @@ else:
     sh = wb.get_active_sheet()
     for row in  range(5, sh.max_row + 1):
         try:
-            phone_number = '86547' + sh['C' + str(row)].value
-            account_name = sh['D' + str(row)].value
-            date = datetime.datetime.strptime(sh['E' + str(row)].value,'%d-%m-%y').date()
+            phone_number = '86547' + sh['C{}'.format(row)].value
+            account_name = sh['D{}'.format(row)].value
+            date = datetime.datetime.strptime(sh['E{}'.format(row)].value,'%d-%m-%y').date()
         except:
             continue
         if phone_number not in phone_numbers:
@@ -45,16 +45,16 @@ for abonent in abonents:
     speed = F.get_speed(abonent['phone_number'], cursor)
     tariff_tv = F.get_tariff_tv(abonent['account_name'], cursor)
     sessions =  F.get_sessions(abonent['account_name'], cursor)
-    sh['B' + row].value = idx
-    sh['C' + row].value = abonent['phone_number'][5:]
-    sh['D' + row].value = abonent['account_name']
-    sh['E' + row].value = abonent['date'].strftime('%d-%m-%y')
-    sh['F' + row].value = delta
-    sh['G' + row].value = speed['up_rate'] if speed['up_rate'] is not None else '-'
-    sh['H' + row].value = speed['dw_rate'] if speed['dw_rate'] is not None else '-'
-    sh['I' + row].value = sessions if sessions is not False else '-'
-    sh['J' + row].value = tariff_tv['tariff']
-    sh['K' + row].value = tariff_tv['tv']
+    sh['B{}'.format(row)].value = idx
+    sh['C{}'.format(row)].value = abonent['phone_number'][5:]
+    sh['D{}'.format(row)].value = abonent['account_name']
+    sh['E{}'.format(row)].value = abonent['date'].strftime('%d-%m-%y')
+    sh['F{}'.format(row)].value = delta
+    sh['G{}'.format(row)].value = speed['up_rate'] if speed['up_rate'] is not None else '-'
+    sh['H{}'.format(row)].value = speed['dw_rate'] if speed['dw_rate'] is not None else '-'
+    sh['I{}'.format(row)].value = sessions if sessions is not False else '-'
+    sh['J{}'.format(row)].value = tariff_tv['tariff']
+    sh['K{}'.format(row)].value = tariff_tv['tv']
     idx += 1
     int_row += 1
 wb.save('Файлы{}Отчет.xlsx'.format(os.sep))
