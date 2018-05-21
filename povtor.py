@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 # coding: utf8
 
 import openpyxl
@@ -16,11 +17,11 @@ for abonent in abonents:
     phone_numbers.append(abonent['phone_number'])
 
 try:
-    wb = openpyxl.load_workbook('Файлы{}Отчет.xlsx'.format(os.sep))
+    wb = openpyxl.load_workbook('Файлы{}Отчет закрытые ADSL.xlsx'.format(os.sep))
 except:
     pass
 else:
-    sh = wb.get_active_sheet()
+    sh = wb.active
     for row in  range(5, sh.max_row + 1):
         try:
             phone_number = '86547' + sh['C{}'.format(row)].value
@@ -32,7 +33,7 @@ else:
             abonents.append({'phone_number' : phone_number, 'account_name' : account_name, 'date' : date})
             
 wb = openpyxl.load_workbook('resources{}table.xlsx'.format(os.sep))
-sh = wb.get_active_sheet()
+sh = wb.active
 sh['B2'].value = 'Отчет на {}'.format(datetime.date.today().strftime('%d-%m-%y'))
 int_row = sh.max_row + 1
 idx = 1
@@ -57,5 +58,5 @@ for abonent in abonents:
     sh['K{}'.format(row)].value = tariff_tv['tv']
     idx += 1
     int_row += 1
-wb.save('Файлы{}Отчет.xlsx'.format(os.sep))
+wb.save('Файлы{}Отчет закрытые ADSL.xlsx'.format(os.sep))
 connect.close()
