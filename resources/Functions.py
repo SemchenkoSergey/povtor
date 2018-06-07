@@ -4,6 +4,24 @@ import datetime
 import os
 from resources import Settings
 
+def get_address(account_name, cursor):
+    command = '''
+    SELECT
+     locality,
+     street,
+     house_number,
+     apartment_number
+    FROM abon_dsl
+    WHERE account_name = "{}"
+    '''.format(account_name)
+    cursor.execute(command)
+    result = cursor.fetchone()
+    if result is None:
+        return '-'
+    address = [s for s in result if s is not None]
+    return ', '.join(address)
+
+
 def get_speed(phone_number, cursor):
     command = '''
     SELECT ROUND(AVG(dd.max_up_rate)), ROUND(AVG(dd.max_dw_rate))

@@ -26,7 +26,7 @@ else:
         try:
             phone_number = '86547' + sh['C{}'.format(row)].value
             account_name = sh['D{}'.format(row)].value
-            date = datetime.datetime.strptime(sh['E{}'.format(row)].value,'%d-%m-%y').date()
+            date = datetime.datetime.strptime(sh['F{}'.format(row)].value,'%d-%m-%y').date()
         except:
             continue
         if phone_number not in phone_numbers:
@@ -46,16 +46,18 @@ for abonent in abonents:
     speed = F.get_speed(abonent['phone_number'], cursor)
     tariff_tv = F.get_tariff_tv(abonent['account_name'], cursor)
     sessions =  F.get_sessions(abonent['account_name'], cursor)
+    address = F.get_address(abonent['account_name'], cursor)
     sh['B{}'.format(row)].value = idx
     sh['C{}'.format(row)].value = abonent['phone_number'][5:]
     sh['D{}'.format(row)].value = abonent['account_name']
-    sh['E{}'.format(row)].value = abonent['date'].strftime('%d-%m-%y')
-    sh['F{}'.format(row)].value = delta
-    sh['G{}'.format(row)].value = speed['up_rate'] if speed['up_rate'] is not None else '-'
-    sh['H{}'.format(row)].value = speed['dw_rate'] if speed['dw_rate'] is not None else '-'
-    sh['I{}'.format(row)].value = sessions if sessions is not False else '-'
-    sh['J{}'.format(row)].value = tariff_tv['tariff']
-    sh['K{}'.format(row)].value = tariff_tv['tv']
+    sh['E{}'.format(row)].value = address
+    sh['F{}'.format(row)].value = abonent['date'].strftime('%d-%m-%y')
+    sh['G{}'.format(row)].value = delta
+    sh['H{}'.format(row)].value = speed['up_rate'] if speed['up_rate'] is not None else '-'
+    sh['I{}'.format(row)].value = speed['dw_rate'] if speed['dw_rate'] is not None else '-'
+    sh['J{}'.format(row)].value = sessions if sessions is not False else '-'
+    sh['K{}'.format(row)].value = tariff_tv['tariff']
+    sh['L{}'.format(row)].value = tariff_tv['tv']
     idx += 1
     int_row += 1
 wb.save('Файлы{}Отчет закрытые ADSL.xlsx'.format(os.sep))
