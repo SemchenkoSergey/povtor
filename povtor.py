@@ -31,6 +31,7 @@ else:
             continue
         if phone_number not in phone_numbers:
             abonents.append({'phone_number' : phone_number, 'account_name' : account_name, 'date' : date})
+            phone_numbers.append(phone_number)
             
 wb = openpyxl.load_workbook('resources{}table.xlsx'.format(os.sep))
 sh = wb.active
