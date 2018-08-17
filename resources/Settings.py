@@ -7,3 +7,9 @@ db_host = ''
 db_user = ''
 db_password = ''
 db_name = ''
+
+# Argus
+ARGUS_LOGIN = ''
+ARGUS_PASSWORD = ''
+department = 'МЦТЭТ г.Изобильный'
+area = 'Петровский р-н'

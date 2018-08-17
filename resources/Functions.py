@@ -1,10 +1,12 @@
 # coding: utf8
 
 import datetime
+import openpyxl
 import os
 from resources import Settings
+from resources import Argus
 
-def get_address(account_name, cursor):
+def get_address(phone_number, cursor):
     command = '''
     SELECT
      locality,
@@ -12,8 +14,8 @@ def get_address(account_name, cursor):
      house_number,
      apartment_number
     FROM abon_dsl
-    WHERE account_name = "{}"
-    '''.format(account_name)
+    WHERE phone_number = "{}"
+    '''.format(phone_number)
     cursor.execute(command)
     result = cursor.fetchone()
     if result is None:
@@ -35,12 +37,15 @@ def get_speed(phone_number, cursor):
             'dw_rate' : result[0][1]}
         
 
-def get_sessions(account_name, cursor):
+def get_sessions(phone_number, cursor):
     command = '''
     SELECT count
     FROM data_sessions
-    WHERE date = DATE_ADD(CURRENT_DATE(), INTERVAL -1 DAY) AND account_name = '{}'
-    '''.format(account_name)
+    WHERE date = DATE_ADD(CURRENT_DATE(), INTERVAL -1 DAY) AND account_name = (
+     SELECT account_name
+     FROM abon_dsl
+     WHERE phone_number = '{}'
+    '''.format(phone_number)
     cursor.execute(command)
     result = cursor.fetchall()
     if len(result) == 0:
@@ -48,12 +53,12 @@ def get_sessions(account_name, cursor):
     else:
         return result[0][0]
 
-def get_tariff_tv(account_name, cursor):
+def get_tariff_tv(phone_number, cursor):
     command = '''
     SELECT tariff, tv
     FROM abon_dsl
-    WHERE account_name = '{}'
-    '''.format(account_name)
+    WHERE phone_number = '{}'
+    '''.format(phone_number)
     cursor.execute(command)
     result = cursor.fetchall()
     if len(result) == 0:
@@ -65,20 +70,44 @@ def get_tariff_tv(account_name, cursor):
 
 def read_input_file():
     result = []
-    day = datetime.date.today() - datetime.timedelta(days=1)
+    date = (datetime.date.today() - datetime.timedelta(days=1)).strftime('%d.%m.%Y')
     with open('Файлы{}Заявки.txt'.format(os.sep), 'r') as f:
         for line in f:
             if '#' in line:
                 continue
-            try:
-                phone_number, account_name = line.split(':')
-            except:
-                continue
-            phone_number = phone_number.strip()
-            account_name = account_name.strip()
-            if len(phone_number) == 5:
-                phone_number = '86547' + phone_number
-            result.append({'phone_number' : phone_number, 'account_name' : account_name, 'date' : day})
+            phone = line.strip()
+            if len(phone) == 5:
+                phone = '86547' + phone
+            result.append(Argus.Incident(url='', service='', date=date, phone=phone))
     with open('Файлы{}Заявки.txt'.format(os.sep), 'w') as f:
-        f.write('# Номер_телефона : учетное_имя\n\n')
+        f.write('# Номер_телефона\n\n')
     return result
+
+def read_report_file():
+    result = []
+    try:
+        wb = openpyxl.load_workbook('Файлы{}Отчет закрытые ADSL.xlsx'.format(os.sep))
+    except Exception as ex:
+        print(ex)
+    else:
+        sh = wb.active
+        for row in  range(5, sh.max_row + 1):
+            phone = '86547' + sh['C{}'.format(row)].value
+            date = sh['E{}'.format(row)].value
+            result.append(Argus.Incident(url='', service='', date=date, phone=phone))
+    return result
+    
+def sort_claims(claims):
+    results = []
+    for i, claim in enumerate(claims):
+        if i == 0:
+            results.append(claim)
+            continue
+        for y, result in enumerate(results):
+            if claim < result:
+                results.insert(y, claim)
+                break
+            if y == len(results) - 1:
+                results.append(claim)
+                break
+    return results[::-1]
