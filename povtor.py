@@ -10,81 +10,78 @@ from resources import Settings
 from resources import Argus
 from resources import Functions as F
 import warnings
-
 warnings.filterwarnings("ignore")
 
 def main():
-    #connect = MySQLdb.connect(host=Settings.db_host, user=Settings.db_user, password=Settings.db_password, db=Settings.db_name, charset='utf8')
-    #cursor = connect.cursor()
-    browser = Argus.open_argus()
-    abonents = F.read_report_file()
-    if len(abonents) == 0:
-        delta = Settings.period
-    else:
-        delta = (datetime.datetime.now().date() - abonents[0].date).days + 1
+    #run_date = datetime.datetime.now().date() # Запуск завтра
+    run_date = datetime.datetime.now().date() - datetime.timedelta(days=1) # Запуск сейчас
+    
     while True:
-        claims = Argus.get_claims_argus(browser, delta)
-        if claims is not None:
-            break
-        browser.quit()
-        time.sleep(60)
-        browser = Argus.open_argus()
-        
-    for claim in claims:
-        Argus.get_phone_argus(browser, claim)
-        abonents.append(claim)
-    abonents += F.read_input_file()
-    abonents = F.sort_claims(abonents)
-    
-    for a in abonents:
-        print(a)
-        
-    browser.quit()
-    #try:
-        #wb = openpyxl.load_workbook('Файлы{}Отчет закрытые ADSL.xlsx'.format(os.sep))
-    #except:
-        #pass
-    #else:
-        #sh = wb.active
-        #for row in  range(5, sh.max_row + 1):
-            #try:
-                #phone_number = '86547' + sh['C{}'.format(row)].value
-                #date = datetime.datetime.strptime(sh['E{}'.format(row)].value, '%d.%m.%Y').date()
-            #except:
-                #continue
-            #if phone_number not in phone_numbers:
-                #abonents.append({'phone_number' : phone_number, 'date' : date})
-                #phone_numbers.append(phone_number)
-                
-    #wb = openpyxl.load_workbook('resources{}table.xlsx'.format(os.sep))
-    #sh = wb.active
-    #sh['B2'].value = 'Отчет на {}'.format(datetime.date.today().strftime('%d.%m.%Y'))
-    #int_row = sh.max_row + 1
-    #idx = 1
-    
-    #for abonent in abonents:
-        #delta = Settings.period - (datetime.date.today() - abonent['date']).days
-        #if delta < 0:
-            #continue
-        #row = str(int_row)
-        #speed = F.get_speed(abonent['phone_number'], cursor)
-        #tariff_tv = F.get_tariff_tv(abonent['phone_number'], cursor)
-        #sessions =  F.get_sessions(abonent['phone_number'], cursor)
-        #address = F.get_address(abonent['phone_number'], cursor)
-        #sh['B{}'.format(row)].value = idx
-        #sh['C{}'.format(row)].value = abonent['phone_number'][5:]
-        #sh['D{}'.format(row)].value = address
-        #sh['E{}'.format(row)].value = abonent['date'].strftime('%d.%m.%Y')
-        #sh['F{}'.format(row)].value = delta
-        #sh['G{}'.format(row)].value = speed['up_rate'] if speed['up_rate'] is not None else '-'
-        #sh['H{}'.format(row)].value = speed['dw_rate'] if speed['dw_rate'] is not None else '-'
-        #sh['I{}'.format(row)].value = sessions if sessions is not False else '-'
-        #sh['J{}'.format(row)].value = tariff_tv['tariff']
-        #sh['K{}'.format(row)].value = tariff_tv['tv']
-        #idx += 1
-        #int_row += 1
-    #wb.save('Файлы{}Отчет закрытые ADSL.xlsx'.format(os.sep))
-    #connect.close()
+        current_date = datetime.datetime.now().date()
+        if (current_date != run_date) and (datetime.datetime.now().hour >= 6):    
+            incidents = F.read_report_file()
+            if len(incidents) == 0:
+                delta = Settings.period
+            else:
+                delta = (datetime.datetime.now().date() - incidents[0].date).days + 1
+            browser = Argus.open_argus()
+            while True:
+                claims = Argus.get_claims_argus(browser, delta)
+                if claims is not None:
+                    break
+                browser.quit()
+                time.sleep(60)
+                browser = Argus.open_argus()   
+            for claim in claims:
+                while True:
+                    if Argus.get_phone_argus(browser, claim) is True:
+                        incidents.append(claim)
+                        break
+            browser.quit()
+            
+            incidents += F.read_input_file()
+            incidents = F.sort_claims(incidents)
+               
+            connect = MySQLdb.connect(host=Settings.db_host, user=Settings.db_user, password=Settings.db_password, db=Settings.db_name, charset='utf8')
+            cursor = connect.cursor()
+            
+            wb = openpyxl.load_workbook('resources{}table.xlsx'.format(os.sep))
+            sh = wb.active
+            sh['B2'].value = 'Отчет на {}'.format(datetime.date.today().strftime('%d.%m.%Y'))
+            int_row = sh.max_row + 1
+            idx = 1
+            
+            use_phones = []
+            for incident in incidents:
+                if incident.phone in use_phones:
+                    continue
+                delta = Settings.period - (datetime.datetime.now().date() - incident.date).days
+                if delta < 0:
+                    continue
+                row = str(int_row)
+                speed = F.get_speed(incident.phone, cursor)
+                tariff_tv = F.get_tariff_tv(incident.phone, cursor)
+                sessions =  F.get_sessions(incident.phone, cursor)
+                address = F.get_address(incident.phone, cursor)
+                sh['B{}'.format(row)].value = idx
+                sh['C{}'.format(row)].value = incident.phone.replace(Settings.phone_code, '')
+                sh['D{}'.format(row)].value = address
+                sh['E{}'.format(row)].value = incident.date.strftime('%d.%m.%Y')
+                sh['F{}'.format(row)].value = delta
+                sh['G{}'.format(row)].value = speed['up_rate'] if speed['up_rate'] is not None else '-'
+                sh['H{}'.format(row)].value = speed['dw_rate'] if speed['dw_rate'] is not None else '-'
+                sh['I{}'.format(row)].value = sessions if sessions is not False else '-'
+                sh['J{}'.format(row)].value = tariff_tv['tariff']
+                sh['K{}'.format(row)].value = tariff_tv['tv']
+                idx += 1
+                int_row += 1
+                use_phones.append(incident.phone)
+            wb.save('Файлы{}Отчет закрытые ADSL.xlsx'.format(os.sep))
+            connect.close()
+            run_date = current_date
+        else:
+            time.sleep(60*20)
+            continue            
 
 
 if __name__ == '__main__':

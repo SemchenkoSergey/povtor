@@ -44,7 +44,7 @@ def get_sessions(phone_number, cursor):
     WHERE date = DATE_ADD(CURRENT_DATE(), INTERVAL -1 DAY) AND account_name = (
      SELECT account_name
      FROM abon_dsl
-     WHERE phone_number = '{}'
+     WHERE phone_number = '{}')
     '''.format(phone_number)
     cursor.execute(command)
     result = cursor.fetchall()
@@ -76,8 +76,10 @@ def read_input_file():
             if '#' in line:
                 continue
             phone = line.strip()
-            if len(phone) == 5:
-                phone = '86547' + phone
+            if len(phone) == 0:
+                continue
+            if len(phone) != 10:
+                phone = Settings.phone_code + phone
             result.append(Argus.Incident(url='', service='', date=date, phone=phone))
     with open('Файлы{}Заявки.txt'.format(os.sep), 'w') as f:
         f.write('# Номер_телефона\n\n')
@@ -88,11 +90,12 @@ def read_report_file():
     try:
         wb = openpyxl.load_workbook('Файлы{}Отчет закрытые ADSL.xlsx'.format(os.sep))
     except Exception as ex:
-        print(ex)
+        #print(ex)
+        pass
     else:
         sh = wb.active
         for row in  range(5, sh.max_row + 1):
-            phone = '86547' + sh['C{}'.format(row)].value
+            phone = Settings.phone_code + sh['C{}'.format(row)].value
             date = sh['E{}'.format(row)].value
             result.append(Argus.Incident(url='', service='', date=date, phone=phone))
     return result
