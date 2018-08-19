@@ -18,7 +18,8 @@ def main():
     
     while True:
         current_date = datetime.datetime.now().date()
-        if (current_date != run_date) and (datetime.datetime.now().hour >= 6):    
+        if (current_date != run_date) and (datetime.datetime.now().hour >= 6):
+            print('Начало работы: {}'.format(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
             incidents = F.read_report_file()
             if len(incidents) == 0:
                 delta = Settings.period
@@ -79,6 +80,8 @@ def main():
             wb.save('Файлы{}Отчет закрытые ADSL.xlsx'.format(os.sep))
             connect.close()
             run_date = current_date
+            print('Завершение работы: {}'.format(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
+            print('---------\n')            
         else:
             time.sleep(60*20)
             continue            
